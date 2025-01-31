@@ -5,7 +5,7 @@
 #include "../offsets/client_dll.hpp"
 #include "../offsets/offsets.hpp"
 #include "../Utils/driver.h"
-#include "../Utils/vars.h"
+#include "../config/vars.h"
 #include "esp.h"
 #include "rcs.h"
 
@@ -14,12 +14,6 @@ namespace PicoDriver
     namespace ItemCache {
         static std::unordered_map<uintptr_t, structures::Item> itemCache;
     }
-
-
-    static const std::string_view WEAPON_PREFIX("weapon_");
-    static const std::string_view PROJECTILE_PREFIX("projectile");
-    static const std::string_view BASEANIMGRAPH_PREFIX("baseanimgraph");
-
 
     void ProcessItems(const uintptr_t Entity, int highestEntityIndex) {
         lists::Items.clear();
@@ -63,7 +57,7 @@ namespace PicoDriver
             structures::Item item;
             bool itemFound = false;
 
-            if (entityName.find(WEAPON_PREFIX) != std::string::npos) {
+            if (entityName.find(xorstr_("weapon_")) != std::string::npos) {
                 const auto weaponIndex = driver::Read<enums::ItemDefinitionIndex>(
                     entityController + cs2::schemas::client_dll::C_EconEntity::m_AttributeManager +
                     cs2::schemas::client_dll::C_AttributeContainer::m_Item +
@@ -78,7 +72,7 @@ namespace PicoDriver
                     itemFound = true;
                 }
             }
-            else if (entityName.find(PROJECTILE_PREFIX) != std::string::npos) {
+            else if (entityName.find(xorstr_("projectile")) != std::string::npos) {
                 const auto it = enums::ItemsProjectile.find(entityName);
                 if (it != enums::ItemsProjectile.end()) {
                     item.Name = it->second;
@@ -86,7 +80,7 @@ namespace PicoDriver
                     itemFound = true;
                 }
             }
-            else if (entityName.find(BASEANIMGRAPH_PREFIX) != std::string::npos) {
+            else if (entityName.find(xorstr_("baseanimgraph")) != std::string::npos) {
                 const auto it = enums::ItemsNames.find(enums::ItemDefinitionIndex::ItemDefuser);
                 if (it != enums::ItemsNames.end()) {
                     item.Name = it->second;
@@ -110,7 +104,7 @@ namespace PicoDriver
     {
 
         const auto clientBase = vars::clientBase;
-        const auto entityList = driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwEntityList);
+        const auto Entity = driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwEntityList);
         const auto gameEntitySystem = driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwGameEntitySystem);
 
         struct GlobalData {
@@ -118,7 +112,7 @@ namespace PicoDriver
             float localSensitivity;
             structures::Vector3 viewAngles;
             int highestEntityIndex;
-            float gameTime;
+           float gameTime;
         } globalData;
 
         const auto sensitivityPtr = driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwSensitivity);
@@ -173,14 +167,32 @@ namespace PicoDriver
         lists::Players.clear();
 
         structures::Player player;
-        uintptr_t Entity = driver::Read<uintptr_t>(vars::clientBase + cs2::offsets::client_dll::dwEntityList);
+
+
+       
 
         for (int i = 0; i < 64; i++) {
-            uintptr_t listEntity = driver::Read<uintptr_t>(entityList + ((8 * (i & 0x7FFF)) >> 9) + 16);
-            if (!listEntity) continue;
+            uintptr_t listEntity = driver::Read<uintptr_t>(Entity + ((8 * (i & 0x7FFF) >> 9) + 16));
+            if (listEntity == 0)
+                continue;
 
-            uintptr_t entityController = driver::Read<uintptr_t>(listEntity + 120 * (i & 0x1FF));
-            if (!entityController) continue;
+            uintptr_t entityController = driver::Read<uintptr_t>(listEntity + (120) * (i & 0x1FF));
+            if (entityController == 0)
+                continue;
+
+            uintptr_t entityControllerPawn = driver::Read<uintptr_t>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_hPlayerPawn);
+            if (entityControllerPawn == 0)
+                continue;
+
+            listEntity = driver::Read<uintptr_t>(Entity + (0x8 * ((entityControllerPawn & 0x7FFF) >> 9) + 16));
+            if (listEntity == 0)
+                continue;
+
+            uintptr_t entityPawn = driver::Read<uintptr_t>(listEntity + (120) * (entityControllerPawn & 0x1FF));
+            if (entityPawn == 0)
+                continue;
+
+
 
             struct PlayerData {
                 uintptr_t pawn;
@@ -195,29 +207,21 @@ namespace PicoDriver
                 bool hasDefuser;
                 bool hasHelmet;
                 bool isLocalPlayer;
+                int steamId;
                 enums::ItemDefinitionIndex HoldingWeapon;
             } playerData;
 
-            const auto entityPawn = driver::Read<uintptr_t>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_hPlayerPawn);
-            if (!entityPawn) continue;
 
-            listEntity = driver::Read<uintptr_t>(entityList + (0x8 * ((entityPawn & 0x7FFF) >> 9) + 16));
-            if (!listEntity) continue;
+            const auto sceneNode = driver::Read<uintptr_t>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
 
-            const auto pawnEntity = driver::Read<uintptr_t>(listEntity + 120 * (entityPawn & 0x1FF));
-            if (!pawnEntity) continue;
-
-
-            const auto sceneNode = driver::Read<uintptr_t>(pawnEntity + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
-
-        	const auto clippingWeapon = driver::Read<uintptr_t>(pawnEntity + cs2::schemas::client_dll::C_CSPlayerPawnBase::m_pClippingWeapon);
+        	const auto clippingWeapon = driver::Read<uintptr_t>(entityPawn + cs2::schemas::client_dll::C_CSPlayerPawnBase::m_pClippingWeapon);
 
             playerData = {
-                pawnEntity,
+                entityPawn,
                 sceneNode,
                 driver::ReadString(driver::Read<uintptr_t>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_sSanitizedPlayerName), 128),
-                driver::Read<enums::Team>(pawnEntity + cs2::schemas::client_dll::C_BaseEntity::m_iTeamNum),
-                driver::Read<int>(pawnEntity + cs2::schemas::client_dll::C_BaseEntity::m_iHealth),
+                driver::Read<enums::Team>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_iTeamNum),
+                driver::Read<int>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_iHealth),
                 driver::Read<structures::Vector3>(sceneNode + cs2::schemas::client_dll::CGameSceneNode::m_vecAbsOrigin),
                 driver::Read<bool>(sceneNode + cs2::schemas::client_dll::CGameSceneNode::m_bDormant),
                 driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnIsAlive),
@@ -225,12 +229,14 @@ namespace PicoDriver
                 driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnHasDefuser),
                 driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnHasHelmet),
                 driver::Read<bool>(entityController + cs2::schemas::client_dll::CBasePlayerController::m_bIsLocalPlayerController),
+                driver::Read<int>(entityController + cs2::schemas::client_dll::CBasePlayerController::m_steamID),
                 driver::Read<enums::ItemDefinitionIndex>(clippingWeapon + cs2::schemas::client_dll::C_EconEntity::m_AttributeManager + cs2::schemas::client_dll::C_AttributeContainer::m_Item + cs2::schemas::client_dll::C_EconItemView::m_iItemDefinitionIndex)
             };
 
-            printf("Entity base: 0x%llX\n", Entity);
-            printf("listEntity: 0x%llX\n", listEntity);
-            printf("entityController: 0x%llX\n", entityController);
+            if (playerData.steamId == 0)
+            {
+                playerData.steamId = i;
+            }
 
             structures::Player player{
                 playerData.position,
@@ -238,7 +244,7 @@ namespace PicoDriver
                 playerData.health,
                 playerData.armor,
                 playerData.HoldingWeapon,
-                0,
+                playerData.steamId,
                 playerData.team,
                 playerData.dormant,
                 playerData.isAlive,

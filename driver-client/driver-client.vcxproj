@@ -124,7 +124,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -187,6 +187,7 @@
     <ClCompile Include="src\overlay\overlay.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\config\config.h" />
     <ClInclude Include="src\features\core.h" />
     <ClInclude Include="src\features\esp.h" />
     <ClInclude Include="src\features\rcs.h" />
@@ -201,14 +202,14 @@
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\offsets\client_dll.hpp" />
     <ClInclude Include="src\offsets\offsets.hpp" />
-    <ClInclude Include="src\updater\updater.h" />
-    <ClInclude Include="src\overlay\Fonts\RobotoMedium.h" />
-    <ClInclude Include="src\overlay\Fonts\RobotoRegular.h" />
-    <ClInclude Include="src\overlay\Fonts\WeaponIcons.h" />
+    <ClInclude Include="src\config\updater.h" />
+    <ClInclude Include="src\overlay\fonts\RobotoMedium.h" />
+    <ClInclude Include="src\overlay\fonts\RobotoRegular.h" />
+    <ClInclude Include="src\overlay\fonts\WeaponIcons.h" />
     <ClInclude Include="src\overlay\overlay.h" />
     <ClInclude Include="src\Utils\driver.h" />
     <ClInclude Include="src\Utils\json.hpp" />
-    <ClInclude Include="src\Utils\vars.h" />
+    <ClInclude Include="src\config\vars.h" />
     <ClInclude Include="src\Utils\xorstr.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

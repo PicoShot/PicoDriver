@@ -1,6 +1,8 @@
 #include "overlay.h"
+#include "../config/config.h"
 #include "../imgui/imgui.h"
-#include "../Utils/xorstr.hpp"
+#include "../utils/xorstr.hpp"
+#include "../config/vars.h"
 
 enum Tabs {
     Visual,
@@ -53,7 +55,7 @@ void overlay::drawMenu() {
                     ImGui::Checkbox(xorstr_("Distance"), &vars::showDistance);
                     ImGui::Checkbox(xorstr_("Health Bar"), &vars::showHealthBar);
                     ImGui::Checkbox(xorstr_("Skeleton"), &vars::showPlayerBone);
-                    ImGui::Checkbox(xorstr_("Armor"), &vars::Armor);
+                    ImGui::Checkbox(xorstr_("showArmor"), &vars::showArmor);
                 }
             }
             ImGui::EndChild();
@@ -62,6 +64,7 @@ void overlay::drawMenu() {
             {
                 ImGui::Combo(xorstr_("Box Type"), &vars::boxStyle, xorstr_("2D Box\0Corners\0"));
                 ImGui::Checkbox(xorstr_("Items ESP"), &vars::showItems);
+                ImGui::Checkbox(xorstr_("Weapons ESP"), &vars::showItems);
             }
             ImGui::EndChild();
             break;
@@ -79,8 +82,22 @@ void overlay::drawMenu() {
         case Misc: {
             ImGui::TextColored(accentColor, xorstr_("Miscellaneous"));
             ImGui::Separator();
-            ImGui::Checkbox(xorstr_("Spectator List"), &vars::spectatorList);
+
+            ImGui::SliderFloat(xorstr_("Text Sizes"), &vars::textSize, 4.f, 24.f);
             ImGui::SliderFloat(xorstr_("Overlay Max FPS"), &vars::maxFps, 15.f, 165.f);
+
+            if (ImGui::Button(xorstr_("Save Config"), ImVec2(100, 30)))
+            {
+                config::SaveConfig();
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button(xorstr_("Unload (Exit)"), ImVec2(100, 30)))
+            {
+                std::exit(0);
+            }
+            
             break;
         }
         }

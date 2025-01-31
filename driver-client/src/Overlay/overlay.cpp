@@ -164,13 +164,13 @@ void ApplyImGuiStyle()
 }
 
 void overlay::render() {
-    static HWND gameWindow = FindWindowA("SDL_app", "Counter-Strike 2");
+    static HWND gameWindow = FindWindowA(xorstr_("SDL_app"), xorstr_("Counter-Strike 2"));
     if (!gameWindow) return;
 
     static const WNDCLASSEXW wc = {
         sizeof(WNDCLASSEXW), CS_CLASSDC, WndProc, 0L, 0L,
         GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
-        L"PicoDriver", nullptr
+        xorstr_(L"PicoDriver"), nullptr
     };
     static bool initialized = false;
     if (!initialized) {
@@ -190,8 +190,8 @@ void overlay::render() {
 
         if (!overlayWindow) {
             overlayWindow = CreateWindowExW(
-                WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED,
-                wc.lpszClassName, L"PicoDriver", WS_POPUP,
+                WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW,
+                wc.lpszClassName, xorstr_(L"PicoDriver"), WS_POPUP,
                 gamePos.x - 1, gamePos.y,
                 currentGameRect.right - currentGameRect.left,
                 currentGameRect.bottom - currentGameRect.top,
@@ -200,10 +200,13 @@ void overlay::render() {
 
             if (!overlayWindow) return;
 
-            SetLayeredWindowAttributes(overlayWindow, RGB(0, 0, 0), 0, LWA_ALPHA);
+            SetLayeredWindowAttributes(overlayWindow, RGB(0, 0, 0), 255, LWA_ALPHA);
+
+            SetWindowLong(overlayWindow, GWL_EXSTYLE,
+                WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW);
 
             static const auto SetWindowDisplayAffinity =
-                (SetWindowDisplayAffinity_t)GetProcAddress(GetModuleHandleA("user32.dll"), "SetWindowDisplayAffinity");
+                (SetWindowDisplayAffinity_t)GetProcAddress(GetModuleHandleA(xorstr_("user32.dll")), xorstr_("SetWindowDisplayAffinity"));
             if (SetWindowDisplayAffinity) {
                 SetWindowDisplayAffinity(overlayWindow, WDA_EXCLUDEFROMCAPTURE);
             }
@@ -224,9 +227,7 @@ void overlay::render() {
             ImGuiIO& io = ImGui::GetIO();
             io.IniFilename = nullptr;
             io.LogFilename = nullptr;
-            io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange |
-                ImGuiConfigFlags_NavEnableKeyboard |
-                ImGuiConfigFlags_NavEnableGamepad;
+            io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
 
             if (!fonts::normal) {
                 io.FontDefault = fonts::normal = io.Fonts->AddFontFromMemoryTTF(
@@ -282,12 +283,11 @@ void overlay::render() {
         if (msg.message == WM_QUIT) return;
     }
 
-    if (GetAsyncKeyState(d_toggle_bind) & 1) {
-        enabled = !enabled;
+    if (GetAsyncKeyState(VK_HOME) & 1) {
+        menuEnabled = !menuEnabled;
         SetWindowLong(overlayWindow, GWL_EXSTYLE,
-            enabled ? WS_EX_TOPMOST : (WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED));
+            menuEnabled ? WS_EX_TOPMOST : (WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED));
     }
-
     if (g_ResizeWidth != 0 && g_ResizeHeight != 0) {
         CleanupRenderTarget();
         g_pSwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
@@ -299,11 +299,11 @@ void overlay::render() {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    if (enabled) {
+    PicoDriver::Main();
+
+    if (menuEnabled) {
         drawMenu();
     }
-
-    PicoDriver::Main();
 
     ImGui::Render();
 
@@ -347,8 +347,6 @@ bool GetBestAdapter(IDXGIAdapter1** ppAdapter) {
             char adapterName[128];
             size_t convertedChars = 0;
             wcstombs_s(&convertedChars, adapterName, sizeof(adapterName), desc.Description, _TRUNCATE);
-            printf("[DEBUG] Selected GPU: %s with %lld MB VRAM\n",
-                adapterName, desc.DedicatedVideoMemory / 1024 / 1024);
         }
         else {
             adapter->Release();
@@ -408,7 +406,6 @@ bool CreateDeviceD3D(HWND hWnd)
     adapter->Release();
 
     if (FAILED(res)) {
-        printf("[ERROR] Failed to create D3D11 device: 0x%lx\n", res);
         return false;
     }
 

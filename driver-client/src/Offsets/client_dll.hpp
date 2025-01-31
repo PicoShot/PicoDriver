@@ -8,85 +8,71 @@ namespace cs2 {
         namespace client_dll
         {
             namespace C_BaseEntity {
-                inline std::ptrdiff_t m_pGameSceneNode = 0x328;
-                inline std::ptrdiff_t m_iTeamNum = 0x3E3;
-                inline std::ptrdiff_t m_iHealth = 0x344
+                inline std::ptrdiff_t m_pGameSceneNode;
+                inline std::ptrdiff_t m_iTeamNum;
+                inline std::ptrdiff_t m_iHealth;
             	;
             }
 
-
-
             namespace CGameSceneNode {
-                inline std::ptrdiff_t m_vecOrigin = 0x88;
-                inline std::ptrdiff_t m_vecAbsOrigin = 0xD0;
-                inline std::ptrdiff_t m_bDormant = 0xEF;
+                inline std::ptrdiff_t m_vecOrigin;
+                inline std::ptrdiff_t m_vecAbsOrigin;
+                inline std::ptrdiff_t m_bDormant;
             }
-
-
 
             namespace C_BasePlayerWeapon {
-                inline std::ptrdiff_t m_iClip1 = 0x1678;
+                inline std::ptrdiff_t m_iClip1;
             }
-
 
             namespace C_PlantedC4 {
-                inline std::ptrdiff_t m_bC4Activated = 0xFD8;
-                inline std::ptrdiff_t m_flC4Blow = 0xFC0;
-                inline std::ptrdiff_t m_nBombSite = 0xF94;
-                inline std::ptrdiff_t m_bBeingDefused = 0xFCC;
-                inline std::ptrdiff_t m_flDefuseLength = 0xFDC;
+                inline std::ptrdiff_t m_bC4Activated;
+                inline std::ptrdiff_t m_flC4Blow;
+                inline std::ptrdiff_t m_nBombSite;
+                inline std::ptrdiff_t m_bBeingDefused;
+                inline std::ptrdiff_t m_flDefuseLength;
                 inline std::ptrdiff_t m_flDefuseCountDown;
-                inline std::ptrdiff_t m_bBombDefused = 0xFE0;
-                inline std::ptrdiff_t m_bHasExploded = 0xFC5;
-                inline std::ptrdiff_t m_flTimerLength = 0xFC8;
+                inline std::ptrdiff_t m_bBombDefused;
+                inline std::ptrdiff_t m_bHasExploded;
+                inline std::ptrdiff_t m_flTimerLength;
             }
-
-
 
             namespace CCSPlayerController {
-                inline std::ptrdiff_t m_hPlayerPawn = 0x80C;
-                inline std::ptrdiff_t m_sSanitizedPlayerName = 0x770;
-                inline std::ptrdiff_t m_bPawnIsAlive = 0x814;
-                inline std::ptrdiff_t m_iPawnArmor = 0x81C;
-                inline std::ptrdiff_t m_bPawnHasDefuser = 0x820;
-                inline std::ptrdiff_t m_bPawnHasHelmet = 0x821;
+                inline std::ptrdiff_t m_hPlayerPawn;
+                inline std::ptrdiff_t m_sSanitizedPlayerName;
+                inline std::ptrdiff_t m_bPawnIsAlive;
+                inline std::ptrdiff_t m_iPawnArmor;
+                inline std::ptrdiff_t m_bPawnHasDefuser;
+                inline std::ptrdiff_t m_bPawnHasHelmet;
             }
-
-
 
             namespace CBasePlayerController {
-                inline std::ptrdiff_t m_bIsLocalPlayerController = 0x6F0;
+                inline std::ptrdiff_t m_bIsLocalPlayerController;
+                inline std::ptrdiff_t m_steamID;
             }
-
-
 
             namespace C_EconEntity {
-                inline std::ptrdiff_t m_AttributeManager = 0x1148;
+                inline std::ptrdiff_t m_AttributeManager;
             }
-
 
             namespace C_AttributeContainer {
-                inline std::ptrdiff_t m_Item = 0x50;
+                inline std::ptrdiff_t m_Item;
             }
-
 
             namespace C_EconItemView {
-                inline std::ptrdiff_t m_iItemDefinitionIndex = 0x1BA;
+                inline std::ptrdiff_t m_iItemDefinitionIndex;
             }
 
-
-
             namespace CSkeletonInstance {
-                inline std::ptrdiff_t m_modelState = 0x170;
+                inline std::ptrdiff_t m_modelState;
             }
 
             namespace C_CSPlayerPawn {
-                inline std::ptrdiff_t m_iShotsFired = 0x23FC;
-                inline std::ptrdiff_t m_aimPunchCache = 0x15A8;
+                inline std::ptrdiff_t m_iShotsFired;
+                inline std::ptrdiff_t m_aimPunchCache;
             }
 
             namespace C_CSPlayerPawnBase {
-                inline std::ptrdiff_t m_pClippingWeapon = 0x13A0;
+                inline std::ptrdiff_t m_pClippingWeapon;
             }
         }
     }

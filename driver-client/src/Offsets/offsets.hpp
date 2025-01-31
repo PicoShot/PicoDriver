@@ -10,25 +10,25 @@ namespace cs2 {
             inline std::ptrdiff_t dwGameEntitySystem;
             inline std::ptrdiff_t dwGameEntitySystem_highestEntityIndex;
             inline std::ptrdiff_t dwGlobalVars;
-            inline std::ptrdiff_t dwLocalPlayerController = 0x1A79C58;
-            inline std::ptrdiff_t dwLocalPlayerPawn = 0x187CEF0;
-            inline std::ptrdiff_t dwPlantedC4 = 0x1A986D0;
-            inline std::ptrdiff_t dwSensitivity = 0x1A908F8;
-            inline std::ptrdiff_t dwSensitivity_sensitivity = 0x40;
+            inline std::ptrdiff_t dwLocalPlayerController;
+            inline std::ptrdiff_t dwLocalPlayerPawn;
+            inline std::ptrdiff_t dwPlantedC4;
+            inline std::ptrdiff_t dwSensitivity;
+            inline std::ptrdiff_t dwSensitivity_sensitivity;
             inline std::ptrdiff_t dwViewAngles;
             inline std::ptrdiff_t dwViewMatrix;
-            inline std::ptrdiff_t dwWeaponC4 = 0x1A2C420;
+            inline std::ptrdiff_t dwWeaponC4;
         }
 
         namespace engine2_dll {
-            inline std::ptrdiff_t dwBuildNumber = 0x540BE4;
-            inline std::ptrdiff_t dwWindowHeight = 0x62354C;
-            inline std::ptrdiff_t dwWindowWidth = 0x623548;
+            inline std::ptrdiff_t dwBuildNumber;
+            inline std::ptrdiff_t dwWindowHeight;
+            inline std::ptrdiff_t dwWindowWidth;
         }
 
         namespace matchmaking_dll {
-            inline std::ptrdiff_t dwGameTypes = 0x1A41B0;
-            inline std::ptrdiff_t dwGameTypes_mapName = 0x120;
+            inline std::ptrdiff_t dwGameTypes;
+            inline std::ptrdiff_t dwGameTypes_mapName;
         }
 
     }

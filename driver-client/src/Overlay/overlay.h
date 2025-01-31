@@ -1,8 +1,7 @@
 #pragma once
 #include <atomic>
 #include "../imgui/imgui.h"
-#include "../Utils/vars.h"
-#define d_toggle_bind 0x2D
+#include "../config/vars.h"
 
 namespace fonts {
     static ImFont* normal = nullptr;
@@ -14,5 +13,5 @@ namespace overlay {
     void drawMenu();
     void render();
     __forceinline structures::Vector3 WorldToScreen(const structures::Vector3& point) noexcept;
-    static std::atomic<bool> enabled{ true };
+    static std::atomic<bool> menuEnabled{ false };
 }

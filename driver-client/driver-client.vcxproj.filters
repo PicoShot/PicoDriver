@@ -50,7 +50,7 @@
     <ClInclude Include="src\Utils\driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Utils\vars.h">
+    <ClInclude Include="src\config\vars.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui\imgui_impl_dx11.h">
@@ -89,13 +89,13 @@
     <ClInclude Include="src\features\esp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\overlay\Fonts\RobotoMedium.h">
+    <ClInclude Include="src\overlay\fonts\RobotoMedium.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\overlay\Fonts\RobotoRegular.h">
+    <ClInclude Include="src\overlay\fonts\RobotoRegular.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\overlay\Fonts\WeaponIcons.h">
+    <ClInclude Include="src\overlay\fonts\WeaponIcons.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\features\rcs.h">
@@ -110,10 +110,13 @@
     <ClInclude Include="src\offsets\offsets.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\updater\updater.h">
+    <ClInclude Include="src\config\updater.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Utils\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\config\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

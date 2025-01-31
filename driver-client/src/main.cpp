@@ -5,16 +5,13 @@
 #include <d3d11.h>
 #include "imgui/imgui.h"
 #include "overlay/overlay.h"
-#include "updater/updater.h"
+#include "config/updater.h"
+#include "config/config.h"
 #include <fcntl.h>
 #include <io.h>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dwmapi.lib")
-
-// esp bounds
-// players weapons
-// spectator list
 
 updater::OffsetUpdater update;
 
@@ -47,17 +44,17 @@ int WINAPI WinMain(
     _In_ LPSTR lpCmdLine,
     _In_ int nShowCmd)
 {
-    SetupConsole();
+	//SetupConsole();
+    
+    config::LoadConfig();
 
-    //if (!update.UpdateOffsets())
+    if (!update.UpdateOffsets())
     {
-        printf(xorstr_("failed to update offsets.\n"));
+        return 1;
     }
 
     driver::AttachToProcess();
-    vars::clientBase = driver::GetModuleBaseByName(L"client.dll");
-
-    printf("clientBase: 0x%llX\n", vars::clientBase);
+    vars::clientBase = driver::GetModuleBaseByName(xorstr_(L"client.dll"));
 
     MSG msg;
     ZeroMemory(&msg, sizeof(msg));

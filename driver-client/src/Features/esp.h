@@ -2,7 +2,7 @@
 #include <algorithm>
 
 #include "../imgui/imgui.h"
-#include "../Utils/vars.h"
+#include "../config/vars.h"
 #include "../overlay/overlay.h"
 #undef max
 
@@ -169,14 +169,14 @@ void RenderBombTimer() {
     );
 
     char siteText[32];
-    sprintf_s(siteText, "SITE %c", vars::C4.Site == 0 ? 'A' : 'B');
+    sprintf_s(siteText, xorstr_("SITE %c"), vars::C4.Site == 0 ? 'A' : 'B');
     drawList->AddText(
         ImVec2(barPos.x + barWidth + 10, barPos.y - 5),
         barColor, siteText
     );
 
     if (vars::localPlayer.Team == 3) {
-        const char* defuseText = canDefuse ? "Can Defuse" : "! RUN !";
+        const char* defuseText = canDefuse ? xorstr_("Can Defuse") : xorstr_("! RUN !");
         ImColor defuseColor = canDefuse ? ImColor(0, 255, 0, 255) : ImColor(255, 0, 0, 255);
         ImVec2 defuseSize = ImGui::CalcTextSize(defuseText);
         drawList->AddText(
@@ -291,8 +291,10 @@ std::unordered_map<std::string, structures::Vector3> GetBonePositions(uintptr_t 
     return bonePositions;
 }
 
-void DrawPlayerSkeleton(ImDrawList* drawList, const std::unordered_map<std::string, structures::Vector3>& bonePositions, ImColor color)
+void DrawPlayerSkeleton(const std::unordered_map<std::string, structures::Vector3>& bonePositions)
 {
+    ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
     for (const auto& connection : lists::BONE_CONNECTIONS)
     {
         const auto& startBone = bonePositions.find(connection.first);
@@ -310,7 +312,7 @@ void DrawPlayerSkeleton(ImDrawList* drawList, const std::unordered_map<std::stri
         drawList->AddLine(
             ImVec2(startScreen.x, startScreen.y),
             ImVec2(endScreen.x, endScreen.y),
-            color,
+            ImColor(255, 255, 255, 255),
             1.5f
         );
     }
@@ -322,7 +324,6 @@ void RenderEsp()
         return;
 
     ImDrawList* drawList = ImGui::GetBackgroundDrawList();
-    ImVec2 displaySize = ImGui::GetIO().DisplaySize;
     RenderItemESP();
     RenderBombTimer();
 
@@ -354,50 +355,138 @@ void RenderEsp()
             );
         }
 
+        if (vars::showPlayerBone)
+        {
+            auto sceneNode = driver::Read<uintptr_t>(player.EntityPawn + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
+            DrawPlayerSkeleton(GetBonePositions(sceneNode));
+        }
+
         if (vars::showPlayerName)
         {
-            ImVec2 textSize = ImGui::CalcTextSize(player.Name.c_str());
-            drawList->AddText(
-                ImVec2(bounds.center.x - textSize.x / 2, bounds.min.y - textSize.y - 2),
-                ImColor(255, 255, 255),
-                player.Name.c_str()
-            );
+            std::string formattedName = "[" + player.Name + "]";
+
+            ImVec2 textSize = ImGui::CalcTextSize(formattedName.c_str());
+
+            ImVec2 textPos = ImVec2(bounds.center.x - textSize.x / 2, bounds.min.y - textSize.y - 2);
+
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y), ImColor(0, 0, 0), formattedName.c_str());
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y), ImColor(0, 0, 0), formattedName.c_str());
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x, textPos.y - 1), ImColor(0, 0, 0), formattedName.c_str());
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x, textPos.y + 1), ImColor(0, 0, 0), formattedName.c_str());
+
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y - 1), ImColor(0, 0, 0), formattedName.c_str());
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y - 1), ImColor(0, 0, 0), formattedName.c_str());
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y + 1), ImColor(0, 0, 0), formattedName.c_str());
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y + 1), ImColor(0, 0, 0), formattedName.c_str());
+
+            drawList->AddText(fonts::normal, vars::textSize, textPos, ImColor(255, 255, 255), formattedName.c_str());
         }
 
         if (vars::showHealthBar)
         {
-            const float barWidth = 3.0f;
+            const float barWidth = 2.5f;
             const float barOffset = 8.0f;
-            float healthPercent = static_cast<float>(player.Health) / 100.0f;
+            const float borderThickness = 1.0f;
+            static std::unordered_map<int, float> smoothHealth;
+            const float smoothSpeed = 4.0f;
+
+            if (smoothHealth.find(player.SteamId) == smoothHealth.end()) {
+                smoothHealth[player.SteamId] = static_cast<float>(player.Health);
+            }
+
+            float& currentSmoothHealth = smoothHealth[player.SteamId];
+            float targetHealth = static_cast<float>(player.Health);
+            currentSmoothHealth += (targetHealth - currentSmoothHealth) * ImGui::GetIO().DeltaTime * smoothSpeed;
+            float healthPercent = currentSmoothHealth / 100.0f;
+
+            drawList->AddRectFilled(
+                ImVec2(bounds.min.x - barOffset - borderThickness, bounds.min.y - borderThickness),
+                ImVec2(bounds.min.x - barOffset + barWidth + borderThickness, bounds.max.y + borderThickness),
+                ImColor(10, 10, 10, 180)
+            );
 
             drawList->AddRectFilled(
                 ImVec2(bounds.min.x - barOffset, bounds.min.y),
                 ImVec2(bounds.min.x - barOffset + barWidth, bounds.max.y),
-                ImColor(60, 60, 60)
+                ImColor(40, 40, 40, 180)
             );
 
+            ImColor healthColor;
+            if (healthPercent >= 0.7f) {
+                healthColor = ImColor(0.f, 255.f, 0.f);
+            }
+            else if (healthPercent >= 0.5f) {
+                float intensity = (healthPercent - 0.5f) / 0.2f;
+                healthColor = ImColor(
+                    255.f,
+                    255.f,
+                    0.f
+                );
+            }
+            else if (healthPercent >= 0.3f) {
+                float intensity = (healthPercent - 0.3f) / 0.2f;
+                healthColor = ImColor(
+                    255.f,
+                    165.f * intensity,
+                    0.f
+                );
+            }
+            else {
+                healthColor = ImColor(255.f, 0.f, 0.f);
+            }
+
             drawList->AddRectFilled(
-                ImVec2(bounds.min.x - barOffset, bounds.min.y + (bounds.max.y - bounds.min.y) * (1.0f - healthPercent)),
+                ImVec2(bounds.min.x - barOffset,
+                    bounds.min.y + (bounds.max.y - bounds.min.y) * (1.0f - healthPercent)),
                 ImVec2(bounds.min.x - barOffset + barWidth, bounds.max.y),
-                ImColor(0.f, 255 * healthPercent, 0.f)
+                healthColor
             );
+
+            if (healthPercent < 1.0f) {
+                char healthText[8];
+                snprintf(healthText, sizeof(healthText), "[%d]", static_cast<int>(currentSmoothHealth));
+
+                ImVec2 textPos = ImVec2(bounds.min.x - barOffset - 18,
+                    bounds.min.y + (bounds.max.y - bounds.min.y) * (1.0f - healthPercent));
+
+                drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y), ImColor(0, 0, 0), healthText);
+                drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y), ImColor(0, 0, 0), healthText);
+                drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x, textPos.y - 1), ImColor(0, 0, 0), healthText);
+                drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x, textPos.y + 1), ImColor(0, 0, 0), healthText);
+
+                drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y - 1), ImColor(0, 0, 0), healthText);
+                drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y - 1), ImColor(0, 0, 0), healthText);
+                drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y + 1), ImColor(0, 0, 0), healthText);
+                drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y + 1), ImColor(0, 0, 0), healthText);
+
+                drawList->AddText(fonts::normal, vars::textSize, textPos, ImColor(255, 255, 255), healthText);
+            }
         }
 
         if (vars::showDistance)
         {
             float distance = CalculateDistance(vars::localPlayer.Position, player.Position);
             char distText[32];
-            sprintf_s(distText, "%.1fm", distance);
+            sprintf_s(distText, "[%.1fm]", distance);
 
             ImVec2 textSize = ImGui::CalcTextSize(distText);
-            drawList->AddText(
-                ImVec2(bounds.max.x + 5, bounds.center.y - textSize.y / 2),
-                ImColor(255, 255, 255),
-                distText
-            );
+
+            ImVec2 textPos = ImVec2(bounds.max.x + 5, bounds.center.y - textSize.y / 2);
+
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y), ImColor(0, 0, 0), distText);
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y), ImColor(0, 0, 0), distText);
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x, textPos.y - 1), ImColor(0, 0, 0), distText);
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x, textPos.y + 1), ImColor(0, 0, 0), distText);
+
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y - 1), ImColor(0, 0, 0), distText);
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y - 1), ImColor(0, 0, 0), distText);
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x - 1, textPos.y + 1), ImColor(0, 0, 0), distText);
+            drawList->AddText(fonts::normal, vars::textSize, ImVec2(textPos.x + 1, textPos.y + 1), ImColor(0, 0, 0), distText);
+
+            drawList->AddText(fonts::normal, vars::textSize, textPos, ImColor(255, 255, 255), distText);
         }
 
-        if (vars::Armor)
+        if (vars::showArmor)
         {
             std::string info;
             if (player.HasHelmet)
@@ -422,21 +511,11 @@ void RenderEsp()
         if (vars::showWeapon)
         {
             const char* weaponStr = GetWeaponName(player.HoldingWeapon);
-            float distance = CalculateDistance(vars::localPlayer.Position, player.Position);
-
-            const float baseSize = 18.f;
-            const float minSize = 12.f;
-            const float maxDistance = 2000.f;
-
-            float scaledSize = std::max(
-                minSize,
-                baseSize * (1.0f - (distance / maxDistance))
-            );
 
             ImVec2 textSize = ImGui::CalcTextSize(weaponStr);
             drawList->AddText(
                 fonts::icons,
-                scaledSize,
+                15.f,
                 ImVec2(bounds.center.x - textSize.x / 2, bounds.max.y),
                 ImColor(255, 255, 255),
                 weaponStr

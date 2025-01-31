@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "../Utils/vars.h"
+#include "../config/vars.h"
 
 struct C_UTL_VECTOR
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include <Windows.h>
-#include "vars.h"
+#include "../config/vars.h"
 #include <string>
 
 #include "xorstr.hpp"
@@ -20,19 +20,6 @@ namespace driver
     namespace cache {
         inline HANDLE driverHandle = nullptr;
         inline DWORD processId = 0;
-    }
-
-    namespace scanner
-	{
-        struct Pattern {
-            std::vector<int> pattern;
-            std::string mask;
-        };
-    }
-
-    namespace debug
-	{
-        inline bool enableLogging = true;
     }
 
     static constexpr ULONG attach = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x696, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
@@ -93,7 +80,7 @@ namespace driver
         ProcessRequest request = {};
         wcscpy_s(request.process_name, processName);
         DWORD bytes_returned = 0;
-        bool success = DeviceIoControl(
+        DeviceIoControl(
             vars::driverHandle,
             get_process_id,
             &request,
@@ -103,12 +90,6 @@ namespace driver
             &bytes_returned,
             nullptr
         );
-        if (!success) {
-            DWORD error = GetLastError();
-            printf(xorstr_("GetProcessIdByName failed:\n"));
-            printf(xorstr_("- Error code: %d\n"), error);
-            return 0;
-        }
         return (DWORD)(DWORD_PTR)request.process_id;
     }
 
@@ -123,61 +104,13 @@ namespace driver
         return DeviceIoControl(vars::driverHandle, attach, &r, sizeof(r), &r, sizeof(r), nullptr, nullptr);
     }
 
-    inline scanner::Pattern ParsePattern(const char* pattern) {
-	    scanner::Pattern result;
-        char* start = const_cast<char*>(pattern);
-        char* end = const_cast<char*>(pattern) + strlen(pattern);
-
-        for (char* current = start; current < end; ++current) {
-            if (*current == '?') {
-                result.pattern.push_back(-1);
-                result.mask.push_back('?');
-            }
-            else if (*current == ' ') {
-                continue;
-            }
-            else {
-                char byte = (char)strtoul(std::string(current, 2).c_str(), nullptr, 16);
-                result.pattern.push_back(byte);
-                result.mask.push_back('x');
-                ++current;
-            }
-        }
-        return result;
-    }
-
-    inline bool DataCompare(const uint8_t* data, const scanner::Pattern& pattern) {
-        for (size_t i = 0; i < pattern.pattern.size(); i++) {
-            if (pattern.mask[i] == '?' || pattern.mask[i] != 'x')
-                continue;
-            if (data[i] != static_cast<uint8_t>(pattern.pattern[i]))
-                return false;
-        }
-        return true;
-    }
-
     inline uintptr_t GetModuleBaseByName(const wchar_t* moduleName) {
-        if (!vars::driverHandle) {
-            printf(xorstr_("[-] Invalid driverHandle for GetModuleBase\n"));
-            return 0;
-        }
-
-        if (!moduleName) {
-            printf(xorstr_("[-] Invalid moduleName for GetModuleBase\n"));
-            return 0;
-        }
-
-        if (!vars::pid) {
-            printf(xorstr_("[-] Invalid pid for GetModuleBase\n"));
-            return 0;
-        }
-
         ModuleRequest request = {};
         request.process_id = reinterpret_cast<HANDLE>(vars::pid);
         wcscpy_s(request.module_name, moduleName);
 
         DWORD bytes_returned = 0;
-        bool success = DeviceIoControl(
+        DeviceIoControl(
             vars::driverHandle,
             get_module_base,
             &request,
@@ -187,29 +120,11 @@ namespace driver
             &bytes_returned,
             nullptr
         );
-
-        if (!success) {
-            DWORD error = GetLastError();
-            printf(xorstr_("[-] GetModuleBase failed:\n"));
-            printf(xorstr_("  - Error code: %d\n"), error);
-            printf(xorstr_("  - Module: %ws\n"), moduleName);
-            return 0;
-        }
-
-        if (!request.base_address) {
-            printf(xorstr_("[-] Module not found: %ws\n"), moduleName);
-            return 0;
-        }
         return reinterpret_cast<uintptr_t>(request.base_address);
     }
 
     template <typename T>
     __forceinline T Read(const std::uintptr_t addr) {
-        if (addr == 0) {
-            printf("[Read Failed] Null address\n");
-            return T{};
-        }
-
         alignas(T) T temp {};
         Request r{
             .process_id = reinterpret_cast<HANDLE>(vars::pid),
@@ -218,17 +133,8 @@ namespace driver
             .size = sizeof(T)
         };
 
-        BOOL result = DeviceIoControl(vars::driverHandle, read, &r, sizeof(r),
+        DeviceIoControl(vars::driverHandle, read, &r, sizeof(r),
             &r, sizeof(r), nullptr, nullptr);
-
-        if (!result) {
-            printf("[Read Failed] Address: 0x%llX, Size: %zu, Error: %lu\n",
-                addr, sizeof(T), GetLastError());
-            return T{};
-        }
-
-        // Optional: Add success logging for specific addresses you want to monitor
-        // printf("[Read Success] Address: 0x%llX, Size: %zu\n", addr, sizeof(T));
 
         return temp;
     }
@@ -245,81 +151,6 @@ namespace driver
 
         DeviceIoControl(vars::driverHandle, write, &r, sizeof(r),
             &r, sizeof(r), nullptr, nullptr);
-    }
-
-    inline uintptr_t FindPattern(uintptr_t start, size_t size, const char* pattern) {
-        if (!start || !size || !pattern) {
-            if (debug::enableLogging) printf("[-] Invalid parameters for pattern scan\n");
-            return 0;
-        }
-
-        auto parsed = ParsePattern(pattern);
-        if (parsed.pattern.empty()) {
-            if (debug::enableLogging) printf("[-] Failed to parse pattern\n");
-            return 0;
-        }
-
-        std::vector<uint8_t> buffer(size);
-
-        Request r{
-            .process_id = reinterpret_cast<HANDLE>(vars::pid),
-            .target = reinterpret_cast<PVOID>(start),
-            .buffer = buffer.data(),
-            .size = size
-        };
-
-        if (!DeviceIoControl(vars::driverHandle, read, &r, sizeof(r),
-            &r, sizeof(r), nullptr, nullptr)) {
-            if (debug::enableLogging) printf("[-] Failed to read memory region\n");
-            return 0;
-        }
-
-        if (debug::enableLogging) {
-            printf("[+] Scanning memory region:\n");
-            printf("    Base: 0x%llx\n", start);
-            printf("    Size: 0x%llx\n", size);
-            printf("    Pattern size: %zu\n", parsed.pattern.size());
-        }
-
-        for (size_t i = 0; i < size - parsed.pattern.size(); i++) {
-            if (DataCompare(buffer.data() + i, parsed)) {
-                if (debug::enableLogging) printf("[+] Pattern found at offset: 0x%llx\n", i);
-                return start + i;
-            }
-        }
-
-        if (debug::enableLogging) printf("[-] Pattern not found\n");
-        return 0;
-    }
-
-    inline uintptr_t FindPatternInModule(const wchar_t* moduleName, const char* pattern) {
-        uintptr_t moduleBase = GetModuleBaseByName(moduleName);
-        if (!moduleBase) {
-            if (debug::enableLogging) printf("[-] Failed to find module: %ws\n", moduleName);
-            return 0;
-        }
-
-        // Read module headers
-        IMAGE_DOS_HEADER dosHeader = Read<IMAGE_DOS_HEADER>(moduleBase);
-        if (dosHeader.e_magic != IMAGE_DOS_SIGNATURE) {
-            if (debug::enableLogging) printf("[-] Invalid DOS header\n");
-            return 0;
-        }
-
-        IMAGE_NT_HEADERS ntHeaders = Read<IMAGE_NT_HEADERS>(moduleBase + dosHeader.e_lfanew);
-        if (ntHeaders.Signature != IMAGE_NT_SIGNATURE) {
-            if (debug::enableLogging) printf("[-] Invalid NT headers\n");
-            return 0;
-        }
-
-        size_t moduleSize = ntHeaders.OptionalHeader.SizeOfImage;
-        if (debug::enableLogging) {
-            printf("[+] Module info:\n");
-            printf("    Base: 0x%llx\n", moduleBase);
-            printf("    Size: 0x%llx\n", moduleSize);
-        }
-
-        return FindPattern(moduleBase, moduleSize, pattern);
     }
 
     inline bool IsValidPtr(uintptr_t ptr) {

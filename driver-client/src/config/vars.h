@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <Windows.h>
+#include "../utils/xorstr.hpp"
 
 constexpr float M_PI = 3.14159265358979323846f;
 constexpr size_t MAX_PLAYERS = 64;
@@ -225,11 +226,11 @@ namespace enums
 	};
 
 	inline std::unordered_map<std::string, std::string> ItemsProjectile = {
-		{"smokegrenade_projectile", "k"},
-		{"hegrenade_projectile", "j"},
-		{"molotov_projectile", "l"},
-		{"flashbang_projectile", "i"},
-		{"decoy_projectile", "m"},
+		{xorstr_("smokegrenade_projectile"), "k"},
+		{xorstr_("hegrenade_projectile"), "j"},
+		{xorstr_("molotov_projectile"), "l"},
+		{xorstr_("flashbang_projectile"), "i"},
+		{xorstr_("decoy_projectile"), "m"},
 	};
 }
 
@@ -424,14 +425,19 @@ namespace vars {
 	inline bool showHealthBar = true;
 	inline bool showWeapon = true;
 	inline bool showDistance = true;
+	inline bool showArmor;
+
 	inline bool aim;
 	inline bool rcs;
+
 	inline bool spectatorList = true;
+
 	inline bool bombTimer = true;
 	inline bool showItems = true;
-	inline bool Armor;
+	
 
 	// float
+	inline float textSize = 14.f;
 	inline float maxFps = 45.f;
 	inline float gameTime;
 	inline float localSensitivity;
@@ -451,40 +457,40 @@ namespace lists {
 	inline structures::FixedArray<structures::Item, MAX_ITEMS> Items;
 
 	const std::vector<structures::BonePosition> BONES = {
-			{ "head", 6 },
-			{ "neck_0", 5 },
-			{ "spine_1", 4 },
-			{ "spine_2", 2 },
-			{ "pelvis", 0 },
-			{ "arm_upper_L", 8 },
-			{ "arm_lower_L", 9 },
-			{ "hand_L", 10 },
-			{ "arm_upper_R", 13 },
-			{ "arm_lower_R", 14 },
-			{ "hand_R", 15 },
-			{ "leg_upper_L", 22 },
-			{ "leg_lower_L", 23 },
-			{ "ankle_L", 24 },
-			{ "leg_upper_R", 25 },
-			{ "leg_lower_R", 26 },
-			{ "ankle_R", 27 }
+			{ xorstr_("head"), 6 },
+			{ xorstr_("neck_0"), 5 },
+			{ xorstr_("spine_1"), 4 },
+			{ xorstr_("spine_2"), 2 },
+			{ xorstr_("pelvis"), 0 },
+			{ xorstr_("arm_upper_L"), 8 },
+			{ xorstr_("arm_lower_L"), 9 },
+			{ xorstr_("hand_L"), 10 },
+			{ xorstr_("arm_upper_R"), 13 },
+			{ xorstr_("arm_lower_R"), 14 },
+			{ xorstr_("hand_R"), 15 },
+			{ xorstr_("leg_upper_L"), 22 },
+			{ xorstr_("leg_lower_L"), 23 },
+			{ xorstr_("ankle_L"), 24 },
+			{ xorstr_("leg_upper_R"), 25 },
+			{ xorstr_("leg_lower_R"), 26 },
+			{ xorstr_("ankle_R"), 27 }
 	};
 	const std::vector<std::pair<std::string, std::string>> BONE_CONNECTIONS = {
-		{"head", "neck_0"},
-		{"neck_0", "spine_1"},
-		{"spine_1", "spine_2"},
-		{"spine_2", "pelvis"},
-		{"neck_0", "arm_upper_L"},
-		{"arm_upper_L", "arm_lower_L"},
-		{"arm_lower_L", "hand_L"},
-		{"neck_0", "arm_upper_R"},
-		{"arm_upper_R", "arm_lower_R"},
-		{"arm_lower_R", "hand_R"},
-		{"pelvis", "leg_upper_L"},
-		{"leg_upper_L", "leg_lower_L"},
-		{"leg_lower_L", "ankle_L"},
-		{"pelvis", "leg_upper_R"},
-		{"leg_upper_R", "leg_lower_R"},
-		{"leg_lower_R", "ankle_R"}
+		{xorstr_("head"), xorstr_("neck_0")},
+		{xorstr_("neck_0"), xorstr_("spine_1")},
+		{xorstr_("spine_1"), xorstr_("spine_2")},
+		{xorstr_("spine_2"), xorstr_("pelvis")},
+		{xorstr_("neck_0"), xorstr_("arm_upper_L")},
+		{xorstr_("arm_upper_L"), xorstr_("arm_lower_L")},
+		{xorstr_("arm_lower_L"), xorstr_("hand_L")},
+		{xorstr_("neck_0"), xorstr_("arm_upper_R")},
+		{xorstr_("arm_upper_R"), xorstr_("arm_lower_R")},
+		{xorstr_("arm_lower_R"), xorstr_("hand_R")},
+		{xorstr_("pelvis"), xorstr_("leg_upper_L")},
+		{xorstr_("leg_upper_L"), xorstr_("leg_lower_L")},
+		{xorstr_("leg_lower_L"), xorstr_("ankle_L")},
+		{xorstr_("pelvis"), xorstr_("leg_upper_R")},
+		{xorstr_("leg_upper_R"), xorstr_("leg_lower_R")},
+		{xorstr_("leg_lower_R"), xorstr_("ankle_R")}
 	};
 }
