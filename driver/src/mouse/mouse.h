@@ -11,7 +11,7 @@
 #define MOUSE_MIDDLE_BUTTON_DOWN 0x0010  // Middle Button changed to down.
 #define MOUSE_MIDDLE_BUTTON_UP   0x0020  // Middle Button changed to up.
 
-// @norsefire & @ekknod
+// credits: @norsefire & @ekknod
 
 inline BOOL mouse_open() {
 	_KeAcquireSpinLockAtDpcLevel = (QWORD)KeAcquireSpinLockAtDpcLevel;
