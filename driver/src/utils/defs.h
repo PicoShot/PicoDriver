@@ -150,25 +150,27 @@ MOUSE_OBJECT gMouseObject;
 
 extern "C" {
 
-    NTSYSCALLAPI
-        POBJECT_TYPE* IoDriverObjectType;
+    // assembly
 
     QWORD _KeAcquireSpinLockAtDpcLevel;
     QWORD _KeReleaseSpinLockFromDpcLevel;
     QWORD _IofCompleteRequest;
     QWORD _IoReleaseRemoveLockEx;
 
-    NTSYSCALLAPI
-        NTSTATUS
-        ObReferenceObjectByName(__in PUNICODE_STRING ObjectName, __in ULONG Attributes, __in_opt PACCESS_STATE AccessState, __in_opt ACCESS_MASK DesiredAccess, __in POBJECT_TYPE ObjectType,
-            __in KPROCESSOR_MODE AccessMode, __inout_opt PVOID ParseContext, __out PVOID* Object);
-    NTSYSCALLAPI
-        NTSTATUS
-        ObReferenceObjectByName(__in PUNICODE_STRING ObjectName, __in ULONG Attributes, __in_opt PACCESS_STATE AccessState, __in_opt ACCESS_MASK DesiredAccess, __in POBJECT_TYPE ObjectType,
-            __in KPROCESSOR_MODE AccessMode, __inout_opt PVOID ParseContext, __out PVOID* Object);
+    // system calls
+
+    NTSYSCALLAPI POBJECT_TYPE* IoDriverObjectType;
+    NTSYSCALLAPI NTSTATUS ObReferenceObjectByName(__in PUNICODE_STRING ObjectName, __in ULONG Attributes, __in_opt PACCESS_STATE AccessState, __in_opt ACCESS_MASK DesiredAccess, __in POBJECT_TYPE ObjectType,__in KPROCESSOR_MODE AccessMode, __inout_opt PVOID ParseContext, __out PVOID* Object);
+
+    // mouse service
 
     VOID MouseClassServiceCallback(PDEVICE_OBJECT DeviceObject, PMOUSE_INPUT_DATA InputDataStart, PMOUSE_INPUT_DATA InputDataEnd, PULONG InputDataConsumed);
+
+    // kernel api 
+
+    NTKERNELAPI NTSTATUS IoCreateDriver(PUNICODE_STRING DriverName, PDRIVER_INITIALIZE InitializationFunction);
+    NTKERNELAPI NTSTATUS MmCopyVirtualMemory(PEPROCESS SourceProcess, PVOID SourceAddress, PEPROCESS TargetProcess, PVOID TargetAddress, SIZE_T BufferSize, KPROCESSOR_MODE PreviousMode, PSIZE_T RetunSize);
+    NTKERNELAPI NTSTATUS ZwQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
+    NTKERNELAPI PVOID PsGetProcessSectionBaseAddress(PEPROCESS Process);
+    NTKERNELAPI PPEB PsGetProcessPeb(PEPROCESS Process);
 }
-
-
-

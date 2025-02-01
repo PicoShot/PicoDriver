@@ -5,24 +5,15 @@
 #include "utils/defs.h"
 #include "utils/log.h"
 
-
-extern "C"
-{
-    NTKERNELAPI NTSTATUS IoCreateDriver(PUNICODE_STRING DriverName, PDRIVER_INITIALIZE InitializationFunction);
-    NTKERNELAPI NTSTATUS MmCopyVirtualMemory(PEPROCESS SourceProcess, PVOID SourceAddress, PEPROCESS TargetProcess, PVOID TargetAddress, SIZE_T BufferSize, KPROCESSOR_MODE PreviousMode, PSIZE_T RetunSize);
-    NTKERNELAPI NTSTATUS ZwQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
-    NTKERNELAPI PVOID PsGetProcessSectionBaseAddress(PEPROCESS Process);
-    NTKERNELAPI PPEB PsGetProcessPeb(PEPROCESS Process);
-}
-
-
 namespace driver
 {
+    ERESOURCE process_lock;
+
     namespace codes
     {
-        constexpr ULONG attach = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x696, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
-        constexpr ULONG read = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x697, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
-        constexpr ULONG write = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x698, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
+        constexpr ULONG attach = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x696, METHOD_NEITHER, FILE_SPECIAL_ACCESS);
+        constexpr ULONG read = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x697, METHOD_NEITHER, FILE_SPECIAL_ACCESS);
+        constexpr ULONG write = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x698, METHOD_NEITHER, FILE_SPECIAL_ACCESS);
         constexpr ULONG get_process_id = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x699, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
         constexpr ULONG get_module_base = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x700, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
         constexpr ULONG mouse_move = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x701, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
@@ -230,40 +221,106 @@ namespace driver
         {
         case codes::attach:
         {
-            auto request = reinterpret_cast<Request*>(irp->AssociatedIrp.SystemBuffer);
-            if (request)
-            {
-                status = PsLookupProcessByProcessId(request->process_id, &target_process);
-                irp->IoStatus.Information = sizeof(Request);
+            auto userRequest = static_cast<Request*>(stack_irp->Parameters.DeviceIoControl.Type3InputBuffer);
+
+            __try {
+                ProbeForRead(userRequest, sizeof(Request), __alignof(Request));
             }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                status = GetExceptionCode();
+                break;
+            }
+
+            Request kernelRequest;
+            RtlCopyMemory(&kernelRequest, userRequest, sizeof(Request));
+
+            ExAcquireResourceExclusiveLite(&driver::process_lock, TRUE);
+            PEPROCESS old_process = target_process;
+            status = PsLookupProcessByProcessId(kernelRequest.process_id, &target_process);
+            if (old_process) ObDereferenceObject(old_process);
+            ExReleaseResourceLite(&driver::process_lock);
+            break;
         }
-        break;
 
         case codes::read:
         {
-            auto request = reinterpret_cast<Request*>(irp->AssociatedIrp.SystemBuffer);
-            if (request && target_process)
-            {
-                status = MmCopyVirtualMemory(target_process, request->target,
-                    PsGetCurrentProcess(), request->buffer,
-                    request->size, KernelMode, &request->return_size);
-                irp->IoStatus.Information = sizeof(Request);
+            auto userRequest = static_cast<Request*>(stack_irp->Parameters.DeviceIoControl.Type3InputBuffer);
+
+            __try {
+                ProbeForRead(userRequest, sizeof(Request), __alignof(Request));
             }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                status = GetExceptionCode();
+                break;
+            }
+
+            Request kernelRequest;
+            RtlCopyMemory(&kernelRequest, userRequest, sizeof(Request));
+
+            __try {
+                ProbeForWrite(kernelRequest.buffer, kernelRequest.size, __alignof(UCHAR));
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                status = GetExceptionCode();
+                break;
+            }
+
+            ExAcquireResourceSharedLite(&driver::process_lock, TRUE);
+            PEPROCESS current_target = target_process;
+            if (current_target) ObReferenceObject(current_target);
+            ExReleaseResourceLite(&driver::process_lock);
+
+            if (current_target) {
+                status = MmCopyVirtualMemory(
+                    current_target, kernelRequest.target,
+                    PsGetCurrentProcess(), kernelRequest.buffer,
+                    kernelRequest.size, KernelMode, &kernelRequest.return_size
+                );
+                ObDereferenceObject(current_target);
+            }
+
+            break;
         }
-        break;
 
         case codes::write:
         {
-            auto request = reinterpret_cast<Request*>(irp->AssociatedIrp.SystemBuffer);
-            if (request && target_process)
-            {
-                status = MmCopyVirtualMemory(PsGetCurrentProcess(), request->buffer,
-                    target_process, request->target,
-                    request->size, KernelMode, &request->return_size);
-                irp->IoStatus.Information = sizeof(Request);
+            auto userRequest = static_cast<Request*>(stack_irp->Parameters.DeviceIoControl.Type3InputBuffer);
+
+            __try {
+                ProbeForRead(userRequest, sizeof(Request), __alignof(Request));
             }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                status = GetExceptionCode();
+                break;
+            }
+
+            Request kernelRequest;
+            RtlCopyMemory(&kernelRequest, userRequest, sizeof(Request));
+
+            __try {
+                ProbeForRead(kernelRequest.buffer, kernelRequest.size, __alignof(UCHAR));
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                status = GetExceptionCode();
+                break;
+            }
+
+            ExAcquireResourceSharedLite(&driver::process_lock, TRUE);
+            PEPROCESS current_target = target_process;
+            if (current_target) ObReferenceObject(current_target);
+            ExReleaseResourceLite(&driver::process_lock);
+
+            if (current_target) {
+                status = MmCopyVirtualMemory(
+                    PsGetCurrentProcess(), kernelRequest.buffer,
+                    current_target, kernelRequest.target,
+                    kernelRequest.size, KernelMode, &kernelRequest.return_size
+                );
+                ObDereferenceObject(current_target);
+            }
+
+            break;
         }
-        break;
 
         case codes::get_process_id:
         {
@@ -318,6 +375,7 @@ VOID DriverUnload(PDRIVER_OBJECT driver_object)
 {
     LogInfo("[+] Unloading PicoDriver...\n");
 
+    ExDeleteResourceLite(&driver::process_lock);
     UNICODE_STRING symbolic_link = {};
     RtlInitUnicodeString(&symbolic_link, L"\\DosDevices\\PicoDriver");
     IoDeleteSymbolicLink(&symbolic_link);
@@ -327,12 +385,16 @@ VOID DriverUnload(PDRIVER_OBJECT driver_object)
         IoDeleteDevice(driver_object->DeviceObject);
     }
 
+
     LogInfo("[+] PicoDriver unloaded successfully.\n");
 }
 
 NTSTATUS driver_main(PDRIVER_OBJECT driver_object, PUNICODE_STRING registry_path)
 {
     UNREFERENCED_PARAMETER(registry_path);
+
+    ExInitializeResourceLite(&driver::process_lock);
+
 
     UNICODE_STRING device_name = {};
     RtlInitUnicodeString(&device_name, L"\\Device\\PicoDriver");
@@ -360,8 +422,6 @@ NTSTATUS driver_main(PDRIVER_OBJECT driver_object, PUNICODE_STRING registry_path
     }
 
     LogInfo("[+] Driver symbolic link successfully established.\n");
-
-    SetFlag(device_object->Flags, DO_BUFFERED_IO);
 
     driver_object->MajorFunction[IRP_MJ_CREATE] = driver::create;
     driver_object->MajorFunction[IRP_MJ_CLOSE] = driver::close;
