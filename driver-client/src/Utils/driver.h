@@ -93,10 +93,10 @@ namespace driver
         return (DWORD)(DWORD_PTR)request.process_id;
     }
 
-    inline bool AttachToProcess()
+    inline bool AttachToProcess(const wchar_t* processName)
     {
         CreateDriverHandle();
-        vars::pid = GetProcessIdByName(xorstr_(L"cs2.exe"));
+        vars::pid = GetProcessIdByName(processName);
         Request r;
 
         r.process_id = reinterpret_cast<HANDLE>(static_cast<UINT_PTR>(vars::pid));

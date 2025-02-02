@@ -8,6 +8,7 @@
 #include "../config/vars.h"
 #include "esp.h"
 #include "rcs.h"
+#include "aim.h"
 
 namespace PicoDriver
 {
@@ -265,7 +266,8 @@ namespace PicoDriver
 
         ProcessItems(Entity, globalData.highestEntityIndex);
 
-        RenderEsp();
+        aim_assist::RunAimbot();
+        esp::RenderEsp();
         RecoilControlSystem();
     }
 }

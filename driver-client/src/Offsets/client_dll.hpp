@@ -74,6 +74,11 @@ namespace cs2 {
             namespace C_CSPlayerPawnBase {
                 inline std::ptrdiff_t m_pClippingWeapon;
             }
+
+            namespace C_BaseModelEntity
+            {
+                inline std::ptrdiff_t m_vecViewOffset;
+            }
         }
     }
     }

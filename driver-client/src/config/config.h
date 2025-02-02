@@ -54,6 +54,12 @@ namespace config
             {
                 auto& aimbot = j[xorstr_("aim")];
                 if (aimbot.contains(xorstr_("aim"))) vars::aim = aimbot[xorstr_("aim")];
+                if (aimbot.contains(xorstr_("aimbot"))) vars::aimbot = aimbot[xorstr_("aimbot")];
+                if (aimbot.contains(xorstr_("showAimbotFov"))) vars::showAimbotFov = aimbot[xorstr_("showAimbotFov")];
+                if (aimbot.contains(xorstr_("aimbotMode"))) vars::aimbotMode = aimbot[xorstr_("aimbotMode")];
+                if (aimbot.contains(xorstr_("aimbotTarget"))) vars::aimbotTarget = aimbot[xorstr_("aimbotTarget")];
+                if (aimbot.contains(xorstr_("aimFov"))) vars::aimFov = aimbot[xorstr_("aimFov")];
+                if (aimbot.contains(xorstr_("aimSmooth"))) vars::aimSmooth = aimbot[xorstr_("aimSmooth")];
                 if (aimbot.contains(xorstr_("rcs"))) vars::rcs = aimbot[xorstr_("rcs")];
             }
 
@@ -96,6 +102,12 @@ namespace config
 
         j[xorstr_("aim")] = {
             {xorstr_("aim"), vars::aim},
+            {xorstr_("aimbot"), vars::aimbot},
+            {xorstr_("showAimbotFov"), vars::showAimbotFov},
+            {xorstr_("aimbotMode"), vars::aimbotMode},
+            {xorstr_("aimbotTarget"), vars::aimbotTarget},
+            {xorstr_("aimFov"), vars::aimFov},
+            {xorstr_("aimSmooth"), vars::aimSmooth},
             {xorstr_("rcs"), vars::rcs},
         };
 
@@ -105,7 +117,6 @@ namespace config
             {xorstr_("textSize"), vars::textSize},
             {xorstr_("maxFps"), vars::maxFps},
         };
-
 
         try
         {

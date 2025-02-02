@@ -186,6 +186,12 @@ namespace updater
                     cs2::schemas::client_dll::C_CSPlayerPawnBase::m_pClippingWeapon = fields[xorstr_("m_pClippingWeapon")];
                 }
 
+                if (clientClasses.contains(xorstr_("C_BaseModelEntity")) && clientClasses[xorstr_("C_BaseModelEntity")].is_object()) {
+                    auto& C_BaseModelEntity = clientClasses[xorstr_("C_BaseModelEntity")];
+                    auto& fields = C_BaseModelEntity[xorstr_("fields")];
+                    cs2::schemas::client_dll::C_BaseModelEntity::m_vecViewOffset = fields[xorstr_("m_vecViewOffset")];
+                }
+
                 return true;
             }
             catch (const std::exception& e) {

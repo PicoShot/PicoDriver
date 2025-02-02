@@ -53,7 +53,7 @@ int WINAPI WinMain(
         return 1;
     }
 
-    driver::AttachToProcess();
+    driver::AttachToProcess(xorstr_(L"cs2.exe"));
     vars::clientBase = driver::GetModuleBaseByName(xorstr_(L"client.dll"));
 
     MSG msg;

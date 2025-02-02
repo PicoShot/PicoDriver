@@ -188,6 +188,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\config\config.h" />
+    <ClInclude Include="src\features\aim.h" />
     <ClInclude Include="src\features\core.h" />
     <ClInclude Include="src\features\esp.h" />
     <ClInclude Include="src\features\rcs.h" />

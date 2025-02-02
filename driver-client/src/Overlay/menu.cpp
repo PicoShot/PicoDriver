@@ -75,6 +75,16 @@ void overlay::drawMenu() {
             ImGui::Checkbox(xorstr_("Enable Aim Assist"), &vars::aim);
             if (vars::aim)
             {
+                ImGui::Checkbox(xorstr_("Aimbot"), &vars::aimbot);
+                if (vars::aimbot)
+                {
+                    ImGui::Checkbox(xorstr_("Draw Fov"), &vars::showAimbotFov);
+                    ImGui::Combo(xorstr_("Aimbot Mode"), &vars::aimbotMode, xorstr_("Always\0Mouse5\0Firing\0"));
+                    ImGui::Combo(xorstr_("Aimbot Target"), &vars::aimbotTarget, xorstr_("Head\0Neck\0Chest\0Stomach\0Pelvis\0"));
+                    ImGui::SliderFloat(xorstr_("Aimbot smooth"), &vars::aimSmooth, 1.f, 50.f);
+                    ImGui::SliderFloat(xorstr_("Aimbot Fov"), &vars::aimFov, 1.f, 90.f);
+                }
+                ImGui::Spacing();
                 ImGui::Checkbox(xorstr_("Recoil Control"), &vars::rcs);
             }
             break;
@@ -89,6 +99,13 @@ void overlay::drawMenu() {
             if (ImGui::Button(xorstr_("Save Config"), ImVec2(100, 30)))
             {
                 config::SaveConfig();
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button(xorstr_("Load Config"), ImVec2(100, 30)))
+            {
+                config::LoadConfig();
             }
 
             ImGui::SameLine();

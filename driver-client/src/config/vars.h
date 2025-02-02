@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include "../utils/xorstr.hpp"
 
-constexpr float M_PI = 3.14159265358979323846f;
+constexpr float M_PI = 3.1415926535f;
 constexpr size_t MAX_PLAYERS = 64;
 constexpr size_t MAX_ITEMS = 1024;
 
@@ -416,6 +416,9 @@ namespace vars {
 	// integer 
 	inline DWORD pid;
 	inline int boxStyle;
+	inline int aimbotMode;
+	inline int aimbotTarget;
+
 	// boolean
 	inline bool esp = true;
 	inline bool showPlayerBox;
@@ -428,6 +431,8 @@ namespace vars {
 	inline bool showArmor;
 
 	inline bool aim;
+	inline bool aimbot;
+	inline bool showAimbotFov;
 	inline bool rcs;
 
 	inline bool spectatorList = true;
@@ -441,6 +446,11 @@ namespace vars {
 	inline float maxFps = 45.f;
 	inline float gameTime;
 	inline float localSensitivity;
+
+
+	inline float aimFov = 5.0f;
+	inline float aimSmooth = 5.0f;
+
 	// custom
 	inline HANDLE driverHandle;
 	inline structures::Player localPlayer;
