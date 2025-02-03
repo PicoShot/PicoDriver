@@ -11,6 +11,7 @@ namespace cs2 {
                 inline std::ptrdiff_t m_pGameSceneNode;
                 inline std::ptrdiff_t m_iTeamNum;
                 inline std::ptrdiff_t m_iHealth;
+                inline std::ptrdiff_t m_vecVelocity;
             	;
             }
 

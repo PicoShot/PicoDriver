@@ -61,6 +61,7 @@ namespace config
                 if (aimbot.contains(xorstr_("aimFov"))) vars::aimFov = aimbot[xorstr_("aimFov")];
                 if (aimbot.contains(xorstr_("aimSmooth"))) vars::aimSmooth = aimbot[xorstr_("aimSmooth")];
                 if (aimbot.contains(xorstr_("rcs"))) vars::rcs = aimbot[xorstr_("rcs")];
+                if (aimbot.contains(xorstr_("showRcsDot"))) vars::showRcsDot = aimbot[xorstr_("showRcsDot")];
             }
 
             if (j.contains(xorstr_("misc")))
@@ -109,6 +110,7 @@ namespace config
             {xorstr_("aimFov"), vars::aimFov},
             {xorstr_("aimSmooth"), vars::aimSmooth},
             {xorstr_("rcs"), vars::rcs},
+            {xorstr_("showRcsDot"), vars::showRcsDot},
         };
 
         j[xorstr_("misc")] = {

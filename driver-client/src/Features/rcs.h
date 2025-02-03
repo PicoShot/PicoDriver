@@ -8,6 +8,8 @@ struct C_UTL_VECTOR
     DWORD64 Data = 0;
 };
 
+static ImVec2 rcsDotPosition = { 0.0f, 0.0f };
+
 structures::Vector2 rcsOldPunch;
 structures::Vector2 currentPunchAngle;
 
@@ -39,18 +41,11 @@ void standalone_rcs_mouse(int numShots, structures::Vector2 aimPunch, float sens
 
 void RecoilControlSystem()
 {
-	if (!vars::rcs || !vars::aim) return;
     if (!vars::localPlayer.IsAlive)
+    {
+	    vars::showRcsDot = false;
         return;
-
-    static float lastUpdateTime = 0.0f;
-    const float updateRate = 1.0f / 60.0f;
-
-    float currentTime = GetTickCount() * 0.001f;
-    if (currentTime - lastUpdateTime < updateRate)
-        return;
-
-    lastUpdateTime = currentTime;
+    }
 
     int numShots = driver::Read<int>(vars::localPlayer.EntityPawn + cs2::schemas::client_dll::C_CSPlayerPawn::m_iShotsFired);
 
@@ -58,6 +53,7 @@ void RecoilControlSystem()
     {
         rcsOldPunch = { 0, 0 };
         currentPunchAngle = { 0, 0 };
+        vars::showRcsDot = false;
         return;
     }
 
@@ -66,6 +62,7 @@ void RecoilControlSystem()
     if (punchCache.Count == 0 || punchCache.Count > 0xFFFF || punchCache.Data == 0)
     {
         currentPunchAngle = { 0, 0 };
+        vars::showRcsDot = false;
         return;
     }
 
@@ -74,10 +71,39 @@ void RecoilControlSystem()
     if (std::isfinite(punchAngle.x) && std::isfinite(punchAngle.y))
     {
         float compensationMultiplier = 1.f;
-
         punchAngle.x *= compensationMultiplier;
         punchAngle.y *= compensationMultiplier;
 
-        standalone_rcs_mouse(numShots, punchAngle, vars::localSensitivity);
+        float mouseX = (punchAngle.y * 2.0f / vars::localSensitivity) / -0.022f;
+        float mouseY = (punchAngle.x * 2.0f / vars::localSensitivity) / 0.022f;
+
+        ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+        float screenCenterX = screenSize.x * 0.5f;
+        float screenCenterY = screenSize.y * 0.5f;
+
+        rcsDotPosition = ImVec2(
+            screenCenterX + mouseX * 0.27,
+            screenCenterY + mouseY * 0.27
+        );
+
+        vars::showRcsDot = true;
+        if (vars::rcs && vars::aim)
+        {
+            standalone_rcs_mouse(numShots, punchAngle, vars::localSensitivity);
+        }
+       
+    }
+    else
+    {
+	    vars::showRcsDot = false;
+    }
+}
+
+void DrawRCSDot()
+{
+    if (vars::showRcsDot)
+    {
+        ImDrawList* drawList = ImGui::GetForegroundDrawList();
+        drawList->AddCircleFilled(rcsDotPosition, 3.0f, IM_COL32(255, 0, 0, 255));
     }
 }

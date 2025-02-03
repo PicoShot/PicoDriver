@@ -52,8 +52,7 @@ namespace aim_assist {
             shouldAim = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
             break;
         case 2:
-            int numShots = driver::Read<int>(vars::localPlayer.EntityPawn + cs2::schemas::client_dll::C_CSPlayerPawn::m_iShotsFired);
-            shouldAim = numShots >= 1;
+            shouldAim = GetAsyncKeyState(VK_LBUTTON) & 0x8000;
             break;
 	    }
         return shouldAim;
@@ -78,7 +77,14 @@ namespace aim_assist {
     structures::Vector3 GetAimPosition(const structures::Player& player) {
         auto sceneNode = driver::Read<uintptr_t>(player.EntityPawn + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
         auto bonePositions = esp::GetBonePositions(sceneNode);
-        return bonePositions[boneNames.at(static_cast<AimPosition>(vars::aimbotTarget))];
+
+        structures::Vector3 targetPos = bonePositions[boneNames.at(static_cast<AimPosition>(vars::aimbotTarget))];
+
+        structures::Vector3 velocity = driver::Read<structures::Vector3>(player.EntityPawn + cs2::schemas::client_dll::C_BaseEntity::m_vecVelocity);
+        float predictionTime = 0.07f;
+        targetPos += velocity * predictionTime;
+
+        return targetPos;
     }
 
     structures::Vector3 CalculateAngle(const structures::Vector3& source, const structures::Vector3& destination) {
@@ -175,23 +181,30 @@ namespace aim_assist {
         if (!target.isValid)
             return;
 
-        structures::Vector3 localViewPos = vars::localPlayer.Position;
-        structures::Vector3 localViewOffset = driver::Read<structures::Vector3>(
+        structures::Vector3 localViewPos = vars::localPlayer.Position + driver::Read<structures::Vector3>(
             vars::localPlayer.EntityPawn + cs2::schemas::client_dll::C_BaseModelEntity::m_vecViewOffset);
-        localViewPos += localViewOffset;
 
         structures::Vector3 aimAngles = CalculateAngle(localViewPos, target.position);
-        structures::Vector3 delta = aimAngles - vars::localViewAngel;
-        delta = NormalizeAngles(delta);
+        structures::Vector3 delta = NormalizeAngles(aimAngles - vars::localViewAngel);
 
-        delta.x /= vars::aimSmooth;
-        delta.y /= vars::aimSmooth;
+        float distanceFromCenter = delta.Length();
+        float smoothFactor = vars::aimSmooth * (1.0f + pow(distanceFromCenter / 10.0f, 2));
+
+        float deadzone = 0.1f;
+        if (distanceFromCenter < deadzone)
+            return;
+
+        delta.x /= smoothFactor;
+        delta.y /= smoothFactor;
 
         int mouseX = static_cast<int>((delta.y / vars::localSensitivity) / 0.022f);
         int mouseY = static_cast<int>(-((delta.x / vars::localSensitivity) / 0.022f));
 
-        mouseX = std::clamp(mouseX, -50, 50);
-        mouseY = std::clamp(mouseY, -50, 50);
+        mouseX = std::clamp(mouseX, -25, 25);
+        mouseY = std::clamp(mouseY, -25, 25);
+
+        if (abs(mouseX) < 1 && abs(mouseY) < 1)
+            return;
 
         driver::MoveMouse(-mouseX, -mouseY, MOUSE_MOVE_RELATIVE);
     }
@@ -199,10 +212,10 @@ namespace aim_assist {
     void RunAimbot()
 	{
 
-        if (!vars::aim && !vars::aimbot)
+        if (!vars::aim || !vars::aimbot)
             return;
 
-        if (vars::showAimbotFov) {
+        if (vars::showAimbotFov || vars::aimbot || vars::aim) {
             DrawFOVCircle();
         }
 

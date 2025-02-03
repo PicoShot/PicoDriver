@@ -269,6 +269,7 @@ namespace PicoDriver
         aim_assist::RunAimbot();
         esp::RenderEsp();
         RecoilControlSystem();
+        DrawRCSDot();
     }
 }
 

@@ -101,6 +101,7 @@ namespace updater
                     cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode = fields[xorstr_("m_pGameSceneNode")];
                     cs2::schemas::client_dll::C_BaseEntity::m_iTeamNum = fields[xorstr_("m_iTeamNum")];
                     cs2::schemas::client_dll::C_BaseEntity::m_iHealth = fields[xorstr_("m_iHealth")];
+                    cs2::schemas::client_dll::C_BaseEntity::m_vecVelocity = fields[xorstr_("m_vecVelocity")];
                 }
 
                 if (clientClasses.contains(xorstr_("CGameSceneNode")) && clientClasses[xorstr_("CGameSceneNode")].is_object()) {

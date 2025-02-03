@@ -434,6 +434,7 @@ namespace vars {
 	inline bool aimbot;
 	inline bool showAimbotFov;
 	inline bool rcs;
+	inline bool showRcsDot = true;
 
 	inline bool spectatorList = true;
 
