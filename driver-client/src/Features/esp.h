@@ -6,11 +6,8 @@
 #include "../overlay/overlay.h"
 #undef max
 
-namespace esp
+namespace Feature
 {
-
-
-
     struct ScreenBounds {
         ImVec2 min;
         ImVec2 max;

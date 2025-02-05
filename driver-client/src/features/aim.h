@@ -6,7 +6,7 @@
 #include "../offsets/client_dll.hpp"
 #include "../Utils/driver.h"
 
-namespace aim_assist {
+namespace Feature {
     enum AimPosition {
         Head = 0,
         Neck = Head + 1,
@@ -76,7 +76,7 @@ namespace aim_assist {
 
     structures::Vector3 GetAimPosition(const structures::Player& player) {
         auto sceneNode = driver::Read<uintptr_t>(player.EntityPawn + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
-        auto bonePositions = esp::GetBonePositions(sceneNode);
+        auto bonePositions = GetBonePositions(sceneNode);
 
         structures::Vector3 targetPos = bonePositions[boneNames.at(static_cast<AimPosition>(vars::aimbotTarget))];
 

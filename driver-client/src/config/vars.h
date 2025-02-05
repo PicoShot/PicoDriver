@@ -1,5 +1,6 @@
 #pragma once
 #include <intrin.h>
+#include <DirectXMath.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -374,10 +375,10 @@ namespace structures
 		enums::ItemDefinitionIndex HoldingWeapon;
 		int SteamId;
 		enums::Team Team;
-		bool Dormant : 1;
-		bool IsAlive : 1;
-		bool HasDefuser : 1;
-		bool HasHelmet : 1;
+		bool Dormant;
+		bool IsAlive;
+		bool HasDefuser;
+		bool HasHelmet;
 		std::string Name;
 	};
 

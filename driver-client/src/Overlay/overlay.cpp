@@ -299,7 +299,7 @@ void overlay::render() {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    PicoDriver::Main();
+    Feature::Main();
 
     if (menuEnabled) {
         drawMenu();

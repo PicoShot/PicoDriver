@@ -10,15 +10,18 @@
 #include "rcs.h"
 #include "aim.h"
 
-namespace PicoDriver
+namespace Feature
 {
     namespace ItemCache {
         static std::unordered_map<uintptr_t, structures::Item> itemCache;
     }
 
-    void ProcessItems(const uintptr_t Entity, int highestEntityIndex) {
+    void ProcessItems(const uintptr_t Entity) {
         lists::Items.clear();
 		ItemCache::itemCache.clear();
+
+        const uintptr_t gameEntitySystem = driver::Read<uintptr_t>(vars::clientBase + cs2::offsets::client_dll::dwGameEntitySystem);
+        const int highestEntityIndex = driver::Read<int>(gameEntitySystem + cs2::offsets::client_dll::dwGameEntitySystem_highestEntityIndex);
       
 
         for (int i = 64; i < highestEntityIndex; i++) {
@@ -103,74 +106,37 @@ namespace PicoDriver
     }
     void Main()
     {
+        const uintptr_t Entity = driver::Read<uintptr_t>(vars::clientBase + cs2::offsets::client_dll::dwEntityList);
+        const uintptr_t sensitivityPtr = driver::Read<uintptr_t>(vars::clientBase + cs2::offsets::client_dll::dwSensitivity);
+      
+        vars::viewMatrix = driver::Read<structures::Matrix4x4>(vars::clientBase + cs2::offsets::client_dll::dwViewMatrix);
+        vars::localSensitivity = driver::Read<float>(sensitivityPtr + cs2::offsets::client_dll::dwSensitivity_sensitivity);
+        vars::localViewAngel = driver::Read<structures::Vector3>(vars::clientBase + cs2::offsets::client_dll::dwViewAngles);
+        vars::gameTime = driver::Read<float>(driver::Read<uintptr_t>(vars::clientBase + cs2::offsets::client_dll::dwGlobalVars) + 0x34);
 
-        const auto clientBase = vars::clientBase;
-        const auto Entity = driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwEntityList);
-        const auto gameEntitySystem = driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwGameEntitySystem);
-
-        struct GlobalData {
-            structures::Matrix4x4 viewMatrix;
-            float localSensitivity;
-            structures::Vector3 viewAngles;
-            int highestEntityIndex;
-           float gameTime;
-        } globalData;
-
-        const auto sensitivityPtr = driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwSensitivity);
-        globalData = {
-        driver::Read<structures::Matrix4x4>(clientBase + cs2::offsets::client_dll::dwViewMatrix),
-        driver::Read<float>(sensitivityPtr + cs2::offsets::client_dll::dwSensitivity_sensitivity),
-        driver::Read<structures::Vector3>(clientBase + cs2::offsets::client_dll::dwViewAngles),
-        driver::Read<int>(gameEntitySystem + cs2::offsets::client_dll::dwGameEntitySystem_highestEntityIndex),
-        driver::Read<float>(driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwGlobalVars) + 0x34)
-        };
-
-        vars::viewMatrix = globalData.viewMatrix;
-        vars::localSensitivity = globalData.localSensitivity;
-        vars::localViewAngel = globalData.viewAngles;
-        vars::gameTime = globalData.gameTime;
-
-        const auto dwPlantedC4 = driver::Read<uintptr_t>(driver::Read<uintptr_t>(clientBase + cs2::offsets::client_dll::dwPlantedC4));
+        const uintptr_t dwPlantedC4 = driver::Read<uintptr_t>(driver::Read<uintptr_t>(vars::clientBase + cs2::offsets::client_dll::dwPlantedC4));
 
         if (dwPlantedC4) {
-            const auto PlantedC4Node = driver::Read<uintptr_t>(dwPlantedC4 + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
+            const uintptr_t PlantedC4Node = driver::Read<uintptr_t>(dwPlantedC4 + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
 
-            struct C4Data {
-                structures::Vector3 position;
-                bool activated;
-                int site;
-                float timeToExplode;
-                bool beingDefused;
-                float maxTimeToDefuse;
-                float timeToDefuse;
-                bool defused;
-                bool exploded;
-                float maxTimeToExplode;
-            } c4Data;
-
-            c4Data = {
-                driver::Read<structures::Vector3>(PlantedC4Node + cs2::schemas::client_dll::CGameSceneNode::m_vecAbsOrigin),
+            vars::C4 = {
                 driver::Read<bool>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_bC4Activated),
-                driver::Read<int>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_nBombSite),
-                driver::Read<float>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_flC4Blow),
-                driver::Read<bool>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_bBeingDefused),
-                driver::Read<float>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_flDefuseLength),
-                driver::Read<float>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_flDefuseCountDown),
-                driver::Read<bool>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_bBombDefused),
+            	false,
                 driver::Read<bool>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_bHasExploded),
-                driver::Read<float>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_flTimerLength)
+                driver::Read<bool>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_bBombDefused),
+                driver::Read<structures::Vector3>(PlantedC4Node + cs2::schemas::client_dll::CGameSceneNode::m_vecAbsOrigin),
+                driver::Read<bool>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_bBeingDefused),
+                driver::Read<float>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_flC4Blow),
+                driver::Read<float>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_flDefuseCountDown),
+                driver::Read<float>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_flTimerLength),
+                driver::Read<float>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_flDefuseLength),
+                driver::Read<int>(dwPlantedC4 + cs2::schemas::client_dll::C_PlantedC4::m_nBombSite),
             };
-            vars::C4 = { c4Data.activated, false, c4Data.exploded, c4Data.defused, c4Data.position,
-                    c4Data.beingDefused, c4Data.timeToExplode, c4Data.timeToDefuse,
-                    c4Data.maxTimeToExplode, c4Data.maxTimeToDefuse, c4Data.site };
         }
 
         lists::Players.clear();
 
         structures::Player player;
-
-
-       
 
         for (int i = 0; i < 64; i++) {
             uintptr_t listEntity = driver::Read<uintptr_t>(Entity + ((8 * (i & 0x7FFF) >> 9) + 16));
@@ -193,68 +159,33 @@ namespace PicoDriver
             if (entityPawn == 0)
                 continue;
 
+            const uintptr_t sceneNode = driver::Read<uintptr_t>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
 
+        	const uintptr_t clippingWeapon = driver::Read<uintptr_t>(entityPawn + cs2::schemas::client_dll::C_CSPlayerPawnBase::m_pClippingWeapon);
 
-            struct PlayerData {
-                uintptr_t pawn;
-                uintptr_t sceneNode;
-                std::string name;
-                enums::Team team;
-                int health;
-                structures::Vector3 position;
-                bool dormant;
-                bool isAlive;
-                int armor;
-                bool hasDefuser;
-                bool hasHelmet;
-                bool isLocalPlayer;
-                int steamId;
-                enums::ItemDefinitionIndex HoldingWeapon;
-            } playerData;
-
-
-            const auto sceneNode = driver::Read<uintptr_t>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_pGameSceneNode);
-
-        	const auto clippingWeapon = driver::Read<uintptr_t>(entityPawn + cs2::schemas::client_dll::C_CSPlayerPawnBase::m_pClippingWeapon);
-
-            playerData = {
-                entityPawn,
-                sceneNode,
-                driver::ReadString(driver::Read<uintptr_t>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_sSanitizedPlayerName), 128),
-                driver::Read<enums::Team>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_iTeamNum),
-                driver::Read<int>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_iHealth),
-                driver::Read<structures::Vector3>(sceneNode + cs2::schemas::client_dll::CGameSceneNode::m_vecAbsOrigin),
-                driver::Read<bool>(sceneNode + cs2::schemas::client_dll::CGameSceneNode::m_bDormant),
-                driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnIsAlive),
-                driver::Read<int>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_iPawnArmor),
-                driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnHasDefuser),
-                driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnHasHelmet),
-                driver::Read<bool>(entityController + cs2::schemas::client_dll::CBasePlayerController::m_bIsLocalPlayerController),
-                driver::Read<int>(entityController + cs2::schemas::client_dll::CBasePlayerController::m_steamID),
-                driver::Read<enums::ItemDefinitionIndex>(clippingWeapon + cs2::schemas::client_dll::C_EconEntity::m_AttributeManager + cs2::schemas::client_dll::C_AttributeContainer::m_Item + cs2::schemas::client_dll::C_EconItemView::m_iItemDefinitionIndex)
-            };
-
-            if (playerData.steamId == 0)
-            {
-                playerData.steamId = i;
-            }
+            const bool isLocalPlayer = driver::Read<bool>(entityController + cs2::schemas::client_dll::CBasePlayerController::m_bIsLocalPlayerController);
 
             structures::Player player{
-                playerData.position,
-                playerData.pawn,
-                playerData.health,
-                playerData.armor,
-                playerData.HoldingWeapon,
-                playerData.steamId,
-                playerData.team,
-                playerData.dormant,
-                playerData.isAlive,
-                playerData.hasDefuser,
-                playerData.hasHelmet, 
-                playerData.name
+                driver::Read<structures::Vector3>(sceneNode + cs2::schemas::client_dll::CGameSceneNode::m_vecAbsOrigin),
+                entityPawn,
+                driver::Read<int>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_iHealth),
+                driver::Read<int>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_iPawnArmor),
+                driver::Read<enums::ItemDefinitionIndex>(clippingWeapon + cs2::schemas::client_dll::C_EconEntity::m_AttributeManager + cs2::schemas::client_dll::C_AttributeContainer::m_Item + cs2::schemas::client_dll::C_EconItemView::m_iItemDefinitionIndex),
+                driver::Read<int>(entityController + cs2::schemas::client_dll::CBasePlayerController::m_steamID),
+                driver::Read<enums::Team>(entityPawn + cs2::schemas::client_dll::C_BaseEntity::m_iTeamNum),
+                driver::Read<bool>(sceneNode + cs2::schemas::client_dll::CGameSceneNode::m_bDormant),
+                driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnIsAlive),
+                driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnHasDefuser),
+                driver::Read<bool>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_bPawnHasHelmet),
+                driver::ReadString(driver::Read<uintptr_t>(entityController + cs2::schemas::client_dll::CCSPlayerController::m_sSanitizedPlayerName), 128),
             };
 
-            if (playerData.isLocalPlayer) {
+            if (player.SteamId == 0)
+            {
+                player.SteamId = i;
+            }
+
+            if (isLocalPlayer) {
                 vars::localPlayer = player;
             }
             else {
@@ -262,12 +193,10 @@ namespace PicoDriver
             }
         }
 
-        lists::Items.clear();
+        ProcessItems(Entity);
 
-        ProcessItems(Entity, globalData.highestEntityIndex);
-
-        aim_assist::RunAimbot();
-        esp::RenderEsp();
+        RunAimbot();
+        RenderEsp();
         RecoilControlSystem();
         DrawRCSDot();
     }
