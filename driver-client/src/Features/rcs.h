@@ -84,8 +84,8 @@ namespace Feature
             float screenCenterY = screenSize.y * 0.5f;
 
             rcsDotPosition = ImVec2(
-                screenCenterX + mouseX * 0.15,
-                screenCenterY + mouseY * 0.15
+                screenCenterX + mouseX * 0.27,
+                screenCenterY + mouseY * 0.27
             );
 
             vars::showRcsDot = true;

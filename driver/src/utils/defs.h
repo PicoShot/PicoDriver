@@ -146,6 +146,48 @@ typedef struct _RTL_PROCESS_MODULE_INFORMATION
 } RTL_PROCESS_MODULE_INFORMATION, * PRTL_PROCESS_MODULE_INFORMATION;
 
 
+struct ProcessRequest
+{
+    WCHAR process_name[260];
+    HANDLE process_id;
+};
+
+struct ModuleRequest {
+    HANDLE process_id;
+    WCHAR module_name[260];
+    PVOID base_address;
+};
+
+
+struct Request
+{
+    HANDLE process_id;
+    PVOID target;
+    PVOID buffer;
+    SIZE_T size;
+    SIZE_T return_size;
+};
+
+struct MouseRequest {
+    long x;
+    long y;
+    unsigned short button_flags;
+};
+
+ERESOURCE process_lock;
+static PEPROCESS target_process = nullptr;
+
+namespace codes
+{
+    constexpr ULONG attach = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x696, METHOD_NEITHER, FILE_SPECIAL_ACCESS);
+    constexpr ULONG read = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x697, METHOD_NEITHER, FILE_SPECIAL_ACCESS);
+    constexpr ULONG write = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x698, METHOD_NEITHER, FILE_SPECIAL_ACCESS);
+    constexpr ULONG get_process_id = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x699, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
+    constexpr ULONG get_module_base = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x700, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
+    constexpr ULONG mouse_move = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x701, METHOD_BUFFERED, FILE_SPECIAL_ACCESS);
+}
+
+
 MOUSE_OBJECT gMouseObject;
 
 extern "C" {

@@ -135,7 +135,9 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\memory\memory.h" />
     <ClInclude Include="src\mouse\mouse.h" />
+    <ClInclude Include="src\process\process.h" />
     <ClInclude Include="src\utils\defs.h" />
     <ClInclude Include="src\utils\log.h" />
   </ItemGroup>
