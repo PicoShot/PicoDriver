@@ -110,7 +110,7 @@
     </DriverSign>
     <ClCompile>
       <LanguageStandard>Default</LanguageStandard>
-      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
