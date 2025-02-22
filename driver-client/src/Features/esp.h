@@ -14,66 +14,88 @@ namespace Feature
         ImVec2 center;
         bool isBehind;
     };
-
     ScreenBounds CalculateScreenSpaceBounds(const structures::Vector3& basePos) {
-        std::vector<structures::Vector3> bounds = {
-            {basePos.x - 16, basePos.y - 16, basePos.z},
-            {basePos.x + 16, basePos.y - 16, basePos.z},
-            {basePos.x + 16, basePos.y + 16, basePos.z},
-            {basePos.x - 16, basePos.y + 16, basePos.z},
-            {basePos.x - 16, basePos.y - 16, basePos.z + 72},
-            {basePos.x + 16, basePos.y - 16, basePos.z + 72},
-            {basePos.x + 16, basePos.y + 16, basePos.z + 72},
-            {basePos.x - 16, basePos.y + 16, basePos.z + 72}
+
+        const float halfWidth = 16.f;
+        const float height = 72.f;
+        const float nearPlane = 0.001f;
+
+        std::vector<structures::Vector3> vertices = {
+            { basePos.x - halfWidth, basePos.y - halfWidth, basePos.z },
+            { basePos.x + halfWidth, basePos.y - halfWidth, basePos.z },
+            { basePos.x + halfWidth, basePos.y + halfWidth, basePos.z },
+            { basePos.x - halfWidth, basePos.y + halfWidth, basePos.z },
+            { basePos.x - halfWidth, basePos.y - halfWidth, basePos.z + height },
+            { basePos.x + halfWidth, basePos.y - halfWidth, basePos.z + height },
+            { basePos.x + halfWidth, basePos.y + halfWidth, basePos.z + height },
+            { basePos.x - halfWidth, basePos.y + halfWidth, basePos.z + height }
         };
 
-        std::vector<structures::Vector3> screenPoints;
-        screenPoints.reserve(bounds.size());
-        bool anyInFront = false;
+        std::vector<structures::Vector3> projected;
+        projected.reserve(vertices.size());
+        for (const auto& v : vertices) {
+            projected.push_back(overlay::WorldToScreen(v));
+        }
 
+        std::vector<std::pair<int, int>> edges = {
+            {0,1}, {1,2}, {2,3}, {3,0},
+            {4,5}, {5,6}, {6,7}, {7,4},
+            {0,4}, {1,5}, {2,6}, {3,7}
+        };
+
+        std::vector<ImVec2> screenPoints;
         ImVec2 displaySize = ImGui::GetIO().DisplaySize;
 
-        for (const auto& point : bounds) {
-            structures::Vector3 screen = overlay::WorldToScreen(point);
-            screenPoints.push_back(screen);
-
-            if (screen.z >= 0.001f &&
-                screen.x >= 0 && screen.x <= displaySize.x &&
-                screen.y >= 0 && screen.y <= displaySize.y) {
-                anyInFront = true;
+        for (const auto& p : projected) {
+            if (p.z > nearPlane) {
+                screenPoints.push_back(ImVec2(p.x, p.y));
             }
         }
 
-        bool isBehind = !anyInFront;
+        for (const auto& edge : edges) {
+            const auto& v1 = vertices[edge.first];
+            const auto& v2 = vertices[edge.second];
+            structures::Vector3 p1 = overlay::WorldToScreen(v1);
+            structures::Vector3 p2 = overlay::WorldToScreen(v2);
 
-        ImVec2 min = ImVec2(FLT_MAX, FLT_MAX);
-        ImVec2 max = ImVec2(-FLT_MAX, -FLT_MAX);
+            bool behind1 = p1.z <= nearPlane;
+            bool behind2 = p2.z <= nearPlane;
 
-        for (const auto& point : screenPoints) {
-            if (point.z < 0.001f) continue;
+            if (behind1 != behind2) {
+                float t = (nearPlane - v1.z) / (v2.z - v1.z);
+                structures::Vector3 intersectWorld;
+                intersectWorld.x = v1.x + t * (v2.x - v1.x);
+                intersectWorld.y = v1.y + t * (v2.y - v1.y);
+                intersectWorld.z = v1.z + t * (v2.z - v1.z);
 
-            min.x = std::min(min.x, point.x);
-            min.y = std::min(min.y, point.y);
-            max.x = std::max(max.x, point.x);
-            max.y = std::max(max.y, point.y);
+                structures::Vector3 intersectScreen = overlay::WorldToScreen(intersectWorld);
+                if (intersectScreen.z > nearPlane) {
+                    screenPoints.push_back(ImVec2(intersectScreen.x, intersectScreen.y));
+                }
+            }
         }
 
-        if (isBehind) {
-            return { ImVec2(0,0), ImVec2(0,0), ImVec2(0,0), isBehind };
+        if (screenPoints.empty()) {
+            return { ImVec2(0,0), ImVec2(0,0), ImVec2(0,0), true };
         }
 
-        ImVec2 center = ImVec2(
-            (max.x + min.x) * 0.5f,
-            (max.y + min.y) * 0.5f
-        );
+        ImVec2 minPt(FLT_MAX, FLT_MAX), maxPt(-FLT_MAX, -FLT_MAX);
+        for (const auto& pt : screenPoints) {
+            minPt.x = std::min(minPt.x, pt.x);
+            minPt.y = std::min(minPt.y, pt.y);
+            maxPt.x = std::max(maxPt.x, pt.x);
+            maxPt.y = std::max(maxPt.y, pt.y);
+        }
 
-        min.x = std::clamp(min.x, 0.0f, displaySize.x);
-        min.y = std::clamp(min.y, 0.0f, displaySize.y);
-        max.x = std::clamp(max.x, 0.0f, displaySize.x);
-        max.y = std::clamp(max.y, 0.0f, displaySize.y);
+        minPt.x = std::clamp(minPt.x, 0.0f, displaySize.x);
+        minPt.y = std::clamp(minPt.y, 0.0f, displaySize.y);
+        maxPt.x = std::clamp(maxPt.x, 0.0f, displaySize.x);
+        maxPt.y = std::clamp(maxPt.y, 0.0f, displaySize.y);
 
-        return { min, max, center, isBehind };
+        ImVec2 center = ImVec2((minPt.x + maxPt.x) * 0.5f, (minPt.y + maxPt.y) * 0.5f);
+        return { minPt, maxPt, center, false };
     }
+
 
     float CalculateDistance(const structures::Vector3& pos1, const structures::Vector3& pos2)
     {
