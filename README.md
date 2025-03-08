@@ -99,7 +99,7 @@ This information is provided for educational purposes only. Users are responsibl
     
     Copy
     
-    `git clone git@github.com:PicoShot/PicoDriver.git`
+    `git clone https://github.com/PicoShot/PicoDriver.git`
     
 4.  **Open the Solution**
     -   Open the `.sln` file with Visual Studio 2022
