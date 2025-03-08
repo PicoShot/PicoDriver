@@ -21,7 +21,7 @@ This project was created solely for educational purposes, intended for those int
 2.  Load the kernel driver:
     -   Drag and drop `driver.sys` onto `kdmapper.exe`
     -   Wait for confirmation that the driver has been successfully loaded
-3.  Launch Counter-Strike 2 and wait until you're in the lobby.
+3.  Launch Counter-Strike 2 in fullscreen winowed or window mode and wait until you're in the lobby.
 4.  Start `client.exe` to activate the enhancer.
 5. Press `home` button on your keyboard to activate menu
 
@@ -49,6 +49,7 @@ This project was created solely for educational purposes, intended for those int
 	- Recoil Control
 - Misc
 	- Recoil Dot
+ 	- Stream proof 
 	- Text Sizes
 	- FPS Control
 
