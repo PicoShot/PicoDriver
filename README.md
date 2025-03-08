@@ -58,6 +58,14 @@ This project was created solely for educational purposes, intended for those int
 - Spectator List
 - Trigger Bot
 - Better Aimbot & ESP
+  
+## Showcase
+
+<div align="center">
+  <img src="https://github.com/PicoShot/PicoDriver/blob/main/showcase/1.png" alt="Screenshot 1" width="32%" />
+  <img src="https://github.com/PicoShot/PicoDriver/blob/main/showcase/2.png" alt="Screenshot 2" width="32%" />
+  <img src="https://github.com/PicoShot/PicoDriver/blob/main/showcase/3.png" alt="Screenshot 3" width="32%" />
+</div>
 
 # VAC
 This project operates at the kernel level, while Valve Anti-Cheat (VAC) functions primarily at the user-mode level. Due to this architectural difference:
