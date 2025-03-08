@@ -463,8 +463,6 @@ namespace vars {
 
 namespace lists {
 
-	
-
 	inline structures::FixedArray<structures::Player, MAX_PLAYERS> Players;
 	inline structures::FixedArray<structures::Item, MAX_ITEMS> Items;
 
